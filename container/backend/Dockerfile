@@ -8,4 +8,5 @@ RUN npm install
 
 COPY ../../backend .
 
+RUN npm run build
 CMD ["npm", "start"]
