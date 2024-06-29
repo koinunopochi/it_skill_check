@@ -1,5 +1,5 @@
 <template>
-  <button type="button" :class="classes" @click="onClick" :style="style">{{ label }} </button>
+  <button type="button" :class="classes" @click="onClick" :style="style">{{ label }}</button>
 </template>
 
 <script lang="ts" setup>
@@ -8,23 +8,26 @@ import { computed } from 'vue';
 
 const props = withDefaults(defineProps<{
   /**
-   * The label of the button
+   * ボタンのラベル
    */
   label: string,
   /**
-   * primary or secondary button
+   * プライマリーボタンかセカンダリーボタンか
    */
   primary?: boolean,
   /**
-   * size of the button
+   * ボタンのサイズ
    */
   size?: 'small' | 'medium' | 'large',
   /**
-   * background color of the button
+   * ボタンの背景色
    */
   backgroundColor?: string,
-
-}>(), { primary: false });
+  /**
+   * 四角めのスタイルを適用するかどうか
+   */
+  square?: boolean,
+}>(), { primary: false, square: false });
 
 const emit = defineEmits<{
   (e: 'click', id: number): void;
@@ -35,6 +38,7 @@ const classes = computed(() => ({
   'storybook-button--primary': props.primary,
   'storybook-button--secondary': !props.primary,
   [`storybook-button--${props.size || 'medium'}`]: true,
+  'storybook-button--square': props.square,
 }));
 
 const style = computed(() => ({
@@ -44,5 +48,4 @@ const style = computed(() => ({
 const onClick = () => {
   emit("click", 1)
 };
-
 </script>

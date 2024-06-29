@@ -1,54 +1,102 @@
 <template>
   <main class="skill-check">
-    <h1>ITエンジニアスキルチェック</h1>
+    <h1>{{ meta.title }}</h1>
     <div class="timer">残り時間: {{ formatTime(remainingTime) }}</div>
-    <div class="score">現在のスコア: {{ score }}点</div>
 
     <div v-if="currentQuestion" class="question">
       <h2>問題 {{ currentQuestionIndex + 1 }}:</h2>
       <p>{{ currentQuestion.question }}</p>
 
+      <!-- Single choice question -->
       <div v-if="currentQuestion.type === 'single'" class="options">
-        <label v-for="option in currentQuestion.options" :key="option">
-          <input type="radio" :value="option" v-model="userAnswer">
-          {{ option }}
-        </label>
+        <RadioButton
+          v-for="option in currentQuestion.options"
+          :key="option"
+          :label="option"
+          :value="option"
+          :name="'question-' + currentQuestion.id"
+          v-model="userAnswers.single"
+        />
       </div>
 
+      <!-- Multiple choice question -->
       <div v-else-if="currentQuestion.type === 'multiple'" class="options">
-        <label v-for="option in currentQuestion.options" :key="option">
-          <input type="checkbox" :value="option" v-model="userAnswer">
-          {{ option }}
-        </label>
+        <CheckboxButton
+          v-for="option in currentQuestion.options"
+          :key="option"
+          :label="option"
+          :value="option"
+          v-model="userAnswers.multiple[option]"
+        />
       </div>
 
+      <!-- Code question -->
       <div v-else-if="currentQuestion.type === 'code'" class="code-input">
-        <textarea v-model="userAnswer" rows="5" placeholder="コードを入力してください"></textarea>
+        <TextInput
+          :id="'code-input-' + currentQuestion.id"
+          v-model="userAnswers.code"
+          type="textarea"
+          rows="5"
+          placeholder="コードを入力してください"
+        />
       </div>
 
       <div v-else-if="currentQuestion.type === 'sort'" class="sort-options">
-        <div v-for="option in currentQuestion.options" :key="option" 
-             draggable="true" @dragstart="dragStart" @dragover.prevent @drop="drop"
-             class="sort-item">
+        <div
+          v-for="option in currentQuestion.options"
+          :key="option"
+          draggable="true"
+          @dragstart="dragStart"
+          @dragover.prevent
+          @drop="drop"
+          class="sort-item"
+        >
           {{ option }}
         </div>
       </div>
 
-      <div v-else-if="currentQuestion.type === 'free_text'" class="free-text-input">
-        <textarea v-model="userAnswer" rows="5" placeholder="自由に回答を記述してください"></textarea>
+      <!-- Free text question -->
+      <div
+        v-else-if="currentQuestion.type === 'free_text'"
+        class="free-text-input"
+      >
+        <TextInput
+          :id="'free-text-' + currentQuestion.id"
+          v-model="userAnswers.free_text"
+          type="textarea"
+          rows="5"
+          placeholder="自由に回答を記述してください"
+        />
       </div>
 
-      <div v-else-if="currentQuestion.type === 'fill_in_blank'" class="fill-in-blank">
-        <p v-for="(blank, index) in currentQuestion.blanks" :key="index">
-          <input type="text" v-model="userAnswer[index]" :placeholder="`空欄${index + 1}`">
-        </p>
+      <!-- Fill in the blank question -->
+      <div
+        v-else-if="currentQuestion.type === 'fill_in_blank'"
+        class="fill-in-blank"
+      >
+        <TextInput
+          v-for="(blank, index) in currentQuestion.blanks"
+          :key="index"
+          :id="'blank-' + currentQuestion.id + '-' + index"
+          v-model="userAnswers.fill_in_blank[index]"
+          :placeholder="`空欄${index + 1}`"
+        />
       </div>
 
+      <!-- Matching question -->
       <div v-else-if="currentQuestion.type === 'matching'" class="matching">
-        <div v-for="(pair, index) in currentQuestion.matchingPairs" :key="index" class="matching-pair">
+        <div
+          v-for="(pair, index) in currentQuestion.matchingPairs"
+          :key="index"
+          class="matching-pair"
+        >
           <span>{{ pair.left }}</span>
-          <select v-model="userAnswer[pair.left]">
-            <option v-for="rightOption in shuffledRightOptions" :key="rightOption" :value="rightOption">
+          <select v-model="userAnswers.matching[pair.left]">
+            <option
+              v-for="rightOption in shuffledRightOptions"
+              :key="rightOption"
+              :value="rightOption"
+            >
               {{ rightOption }}
             </option>
           </select>
@@ -57,95 +105,141 @@
     </div>
 
     <div class="navigation">
-      <button @click="prevQuestion" :disabled="currentQuestionIndex === 0">前の問題</button>
-      <button @click="nextQuestion" :disabled="currentQuestionIndex === questions.length - 1">次の問題</button>
+      <Button
+        :primary="true"
+        @click="prevQuestion"
+        label="前の問題"
+        :square="true"
+        :disabled="currentQuestionIndex === 0"
+      />
+      <Button
+        :primary="true"
+        @click="nextQuestion"
+        label="次の問題"
+        :square="true"
+        :disabled="currentQuestionIndex === questions.length - 1"
+      />
     </div>
-
-    <button class="submit" @click="submitTest">テスト終了</button>
+    <Button
+      :primary="true"
+      @click="submitTest"
+      label="終了"
+      :square="true"
+      background-color="#3a75ff"
+    />
   </main>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { Question } from './types';
+import type { Meta, Question, UserAnswers } from './types';
+import Button from '@/stories/Buttons/Button.vue';
+import RadioButton from '@/stories/RadioButtons/RadioButton.vue';
+import CheckboxButton from '@/stories/CheckboxButtons/CheckboxButton.vue';
+import TextInput from '@/stories/TextInputs/TextInput.vue';
+
+const meta: Meta = {
+  title: 'エンジニアスキルチェックテスト',
+  limitTime: 1800, // 30 minutes
+};
 
 const questions: Question[] = [
   {
     id: 1,
     type: 'single',
-    question: 'JavaScriptにおいて、配列の末尾に要素を追加するメソッドは次のうちどれですか？',
+    question:
+      'JavaScriptにおいて、配列の末尾に要素を追加するメソッドは次のうちどれですか？',
     options: ['push()', 'append()', 'addToEnd()', 'insert()'],
-    correctAnswer: 'push()'
+    correctAnswer: 'push()',
   },
   {
     id: 2,
     type: 'multiple',
-    question: 'RESTful APIのHTTPメソッドのうち、リソースの作成に使用されるものはどれですか？（複数選択可）',
+    question:
+      'RESTful APIのHTTPメソッドのうち、リソースの作成に使用されるものはどれですか？（複数選択可）',
     options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    correctAnswer: ['POST', 'PUT']
+    correctAnswer: ['POST', 'PUT'],
   },
   {
     id: 3,
     type: 'code',
-    question: '次の関数を完成させてください。この関数は与えられた配列の要素をすべて2倍にして返します。',
-    correctAnswer: 'return arr.map(x => x * 2);'
+    question:
+      '次の関数を完成させてください。この関数は与えられた配列の要素をすべて2倍にして返します。',
+    correctAnswer: 'return arr.map(x => x * 2);',
   },
   {
     id: 4,
     type: 'sort',
-    question: '以下のソフトウェア開発プロセスを正しい順序に並べ替えてください。',
+    question:
+      '以下のソフトウェア開発プロセスを正しい順序に並べ替えてください。',
     options: ['テスト', '設計', '要件定義', '実装', '保守'],
-    correctAnswer: ['要件定義', '設計', '実装', 'テスト', '保守']
+    correctAnswer: ['要件定義', '設計', '実装', 'テスト', '保守'],
   },
   {
     id: 5,
     type: 'single',
     question: 'どのデータ構造がLIFO（Last In First Out）の原則に従いますか？',
     options: ['キュー', 'スタック', '連結リスト', '二分木'],
-    correctAnswer: 'スタック'
+    correctAnswer: 'スタック',
   },
   {
     id: 6,
     type: 'free_text',
-    question: 'オブジェクト指向プログラミングの主要な特徴を3つ挙げ、簡単に説明してください。',
-    correctAnswer: '模範解答: カプセル化、継承、ポリモーフィズム' // 採点基準として使用
+    question:
+      'オブジェクト指向プログラミングの主要な特徴を3つ挙げ、簡単に説明してください。',
+    correctAnswer: '模範解答: カプセル化、継承、ポリモーフィズム', // 採点基準として使用
   },
   {
     id: 7,
     type: 'fill_in_blank',
-    question: 'HTMLにおいて、ハイパーリンクを作成するタグは <_____> です。このタグの主要な属性は _____ で、リンク先のURLを指定します。',
+    question:
+      'HTMLにおいて、ハイパーリンクを作成するタグは <_____> です。このタグの主要な属性は _____ で、リンク先のURLを指定します。',
     blanks: ['a', 'href'],
-    correctAnswer: ['a', 'href']
+    correctAnswer: ['a', 'href'],
   },
   {
     id: 8,
     type: 'matching',
-    question: '以下のプログラミング言語と、その主な用途をマッチングしてください。',
+    question:
+      '以下のプログラミング言語と、その主な用途をマッチングしてください。',
     matchingPairs: [
       { left: 'Python', right: 'データ分析' },
       { left: 'JavaScript', right: 'Webフロントエンド' },
       { left: 'SQL', right: 'データベース操作' },
-      { left: 'C++', right: 'システムプログラミング' }
+      { left: 'C++', right: 'システムプログラミング' },
     ],
     correctAnswer: {
-      'Python': 'データ分析',
-      'JavaScript': 'Webフロントエンド',
-      'SQL': 'データベース操作',
-      'C++': 'システムプログラミング'
-    }
-  }
+      Python: 'データ分析',
+      JavaScript: 'Webフロントエンド',
+      SQL: 'データベース操作',
+      'C++': 'システムプログラミング',
+    },
+  },
 ];
 
 const currentQuestionIndex = ref(0);
 const score = ref(0);
-const remainingTime = ref(1800); // 30分
-const userAnswer = ref<string | string[] | { [key: string]: string }>('');
+const remainingTime = ref(meta.limitTime); // 30分
+const userAnswers = ref<UserAnswers>({
+  single: '',
+  multiple: {},
+  code: '',
+  sort: [],
+  free_text: '',
+  fill_in_blank: [],
+  matching: {},
+});
 
 const currentQuestion = computed(() => questions[currentQuestionIndex.value]);
 
 const shuffledRightOptions = computed(() => {
-  if (currentQuestion.value?.type === 'matching') {
-    return currentQuestion.value.matchingPairs.map(pair => pair.right).sort(() => Math.random() - 0.5);
+  if (
+    currentQuestion.value?.type === 'matching' &&
+    Array.isArray(currentQuestion.value.matchingPairs)
+  ) {
+    return currentQuestion.value.matchingPairs
+      .map((pair) => pair.right)
+      .sort(() => Math.random() - 0.5);
   }
   return [];
 });
@@ -159,20 +253,97 @@ function formatTime(seconds: number): string {
 function prevQuestion() {
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value--;
-    userAnswer.value = '';
+    resetUserAnswer();
   }
 }
 
 function nextQuestion() {
   if (currentQuestionIndex.value < questions.length - 1) {
     currentQuestionIndex.value++;
-    userAnswer.value = '';
+    resetUserAnswer();
   }
 }
 
+function resetUserAnswer() {
+  const currentQuestion = questions[currentQuestionIndex.value];
+  const questionType = currentQuestion.type;
+
+  switch (questionType) {
+    case 'multiple':
+      userAnswers.value.multiple = Object.fromEntries(
+        (currentQuestion.options ?? []).map((option) => [option, false])
+      );
+      break;
+    case 'fill_in_blank':
+      userAnswers.value.fill_in_blank = new Array(
+        currentQuestion.blanks?.length || 0
+      ).fill('');
+      break;
+    case 'matching':
+      userAnswers.value.matching = Object.fromEntries(
+        (currentQuestion.matchingPairs ?? []).map((pair) => [pair.left, ''])
+      );
+      break;
+    case 'sort':
+      userAnswers.value.sort = [...(currentQuestion.options ?? [])];
+      break;
+    default:
+      userAnswers.value[questionType] = '';
+  }
+}
+
+// function getSelectedOptions() {
+//   return Object.entries(userAnswers.value.multiple)
+//     .filter(([_, isChecked]) => isChecked)
+//     .map(([option, _]) => option);
+// }
+
+function calculateScore(): number {
+  let totalScore = 0;
+  questions.forEach((question, index) => {
+    const userAnswer = userAnswers.value[question.type];
+    switch (question.type) {
+      case 'single':
+        if (userAnswer === question.correctAnswer) totalScore++;
+        break;
+      case 'multiple':
+        const selectedOptions = Object.entries(userAnswer)
+          .filter(([_, isChecked]) => isChecked)
+          .map(([option, _]) => option);
+        if (JSON.stringify(selectedOptions.sort()) === JSON.stringify(question.correctAnswer.sort())) totalScore++;
+        break;
+      case 'code':
+        // 簡単な比較。実際には、より高度なコード評価が必要かもしれません。
+        if (userAnswer.trim() === question.correctAnswer.trim()) totalScore++;
+        break;
+      case 'sort':
+        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        break;
+      case 'free_text':
+        // 自由記述の採点は難しいので、ここでは単純に文字列の一致を確認します。
+        // 実際のアプリケーションでは、より高度な採点ロジックが必要かもしれません。
+        if (userAnswer.includes(question.correctAnswer)) totalScore++;
+        break;
+      case 'fill_in_blank':
+        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        break;
+      case 'matching':
+        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        break;
+    }
+  });
+  return totalScore;
+}
+
 function submitTest() {
-  // Here you would implement the logic to calculate the final score
-  alert(`テストが終了しました。最終スコア: ${score.value}点`);
+  const finalScore = calculateScore();
+  score.value = finalScore;
+  const maxScore = questions.length;
+  alert(`テストが終了しました。\n最終スコア: ${finalScore}/${maxScore} 点`);
+  
+  // ここで結果の詳細を表示したり、サーバーに送信したりすることができます。
+  console.log('ユーザーの回答:', userAnswers.value);
+  console.log('正解:', questions.map(q => q.correctAnswer));
 }
 
 // Drag and drop functionality for sort questions
@@ -203,7 +374,8 @@ function drop(e: DragEvent) {
     color: #333;
   }
 
-  .timer, .score {
+  .timer,
+  .score {
     text-align: right;
     margin-bottom: 10px;
     font-weight: bold;
@@ -260,7 +432,7 @@ function drop(e: DragEvent) {
 
     button {
       padding: 10px 20px;
-      background-color: #4CAF50;
+      background-color: #4caf50;
       color: white;
       border: none;
       border-radius: 4px;
@@ -281,7 +453,7 @@ function drop(e: DragEvent) {
     display: block;
     width: 100%;
     padding: 15px;
-    background-color: #008CBA;
+    background-color: #008cba;
     color: white;
     border: none;
     border-radius: 4px;
@@ -289,7 +461,7 @@ function drop(e: DragEvent) {
     cursor: pointer;
 
     &:hover {
-      background-color: #007B9A;
+      background-color: #007b9a;
     }
   }
 

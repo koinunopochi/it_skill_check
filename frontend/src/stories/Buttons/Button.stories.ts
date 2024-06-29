@@ -2,11 +2,11 @@ import type { Meta, StoryObj } from '@storybook/vue3';
 import { fn } from '@storybook/test';
 import Button from './Button.vue';
 
-// More on how to set up stories at: https://storybook.js.org/docs/writing-stories
+// ストーリーの設定方法についての詳細: https://storybook.js.org/docs/writing-stories
 const meta = {
   title: 'Example/Button',
   component: Button,
-  // This component will have an automatically generated docsPage entry: https://storybook.js.org/docs/writing-docs/autodocs
+  // このコンポーネントは自動生成されたドキュメントページを持ちます: https://storybook.js.org/docs/writing-docs/autodocs
   tags: ['autodocs'],
   argTypes: {
     size: { control: 'select', options: ['small', 'medium', 'large'] },
@@ -14,17 +14,17 @@ const meta = {
   },
   args: {
     primary: false,
-    // Use `fn` to spy on the onClick arg, which will appear in the actions panel once invoked: https://storybook.js.org/docs/essentials/actions#action-args
+    // アクションパネルに表示される onClick 引数をスパイするには `fn` を使用します: https://storybook.js.org/docs/essentials/actions#action-args
     onClick: fn(),
   },
 } satisfies Meta<typeof Button>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
-/*
- *👇 Render functions are a framework specific feature to allow you control on how the component renders.
- * See https://storybook.js.org/docs/api/csf
- * to learn how to use render functions.
+
+/**
+ * レンダー関数はコンポーネントのレンダリング方法を制御するためのフレームワーク固有の機能です。
+ * レンダー関数の使用方法については https://storybook.js.org/docs/api/csf を参照してください。
  */
 export const Primary: Story = {
   args: {
@@ -35,21 +35,20 @@ export const Primary: Story = {
 
 export const Secondary: Story = {
   args: {
-    primary: false,
     label: 'Button',
   },
 };
 
 export const Large: Story = {
   args: {
-    label: 'Button',
     size: 'large',
+    label: 'Button',
   },
 };
 
 export const Small: Story = {
   args: {
-    label: 'Button',
     size: 'small',
+    label: 'Button',
   },
 };
