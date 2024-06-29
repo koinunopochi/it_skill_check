@@ -304,20 +304,6 @@ function submitTest() {
   );
 }
 
-function dragStart(e: DragEvent) {
-  if (e.dataTransfer) {
-    e.dataTransfer.setData('text/plain', (e.target as HTMLElement).innerHTML);
-  }
-}
-
-function drop(e: DragEvent) {
-  e.preventDefault();
-  const data = e.dataTransfer?.getData('text');
-  if (data && e.target instanceof HTMLElement) {
-    e.target.innerHTML = data;
-  }
-}
-
 watch(
   () => meta.limitTime,
   (newLimitTime) => {
