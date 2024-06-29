@@ -9,6 +9,11 @@ const router = createRouter({
       name: 'home',
       component: HomeView,
     },
+    {
+      path:'/admin/console',
+      name: 'admin-console',
+      component: () => import('../views/AdminConsole.vue'),
+    }
   ],
 });
 
