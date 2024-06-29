@@ -1,0 +1,12 @@
+.sort-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.sort-item {
+  padding: 10px;
+  background-color: #f0f0f0;
+  border: 1px solid #ddd;
+  cursor: move;
+}
