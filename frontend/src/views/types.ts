@@ -12,6 +12,11 @@ export interface Question {
   matchingPairs?: { left: string; right: string }[];
 }
 
+export interface Meta {
+  title: string;
+  limitTime: number;
+}
+
 export interface UserAnswers {
   single: string;
   multiple: { [key: string]: boolean };

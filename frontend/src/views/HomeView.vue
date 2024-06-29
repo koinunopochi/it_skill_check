@@ -1,8 +1,7 @@
 <template>
   <main class="skill-check">
-    <h1>ITエンジニアスキルチェック</h1>
+    <h1>{{ meta.title }}</h1>
     <div class="timer">残り時間: {{ formatTime(remainingTime) }}</div>
-    <div class="score">現在のスコア: {{ score }}点</div>
 
     <div v-if="currentQuestion" class="question">
       <h2>問題 {{ currentQuestionIndex + 1 }}:</h2>
@@ -133,11 +132,16 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { Question, UserAnswers } from './types';
+import type { Meta, Question, UserAnswers } from './types';
 import Button from '@/stories/Buttons/Button.vue';
 import RadioButton from '@/stories/RadioButtons/RadioButton.vue';
 import CheckboxButton from '@/stories/CheckboxButtons/CheckboxButton.vue';
 import TextInput from '@/stories/TextInputs/TextInput.vue';
+
+const meta: Meta = {
+  title: 'エンジニアスキルチェックテスト',
+  limitTime: 1800, // 30 minutes
+};
 
 const questions: Question[] = [
   {
@@ -215,7 +219,7 @@ const questions: Question[] = [
 
 const currentQuestionIndex = ref(0);
 const score = ref(0);
-const remainingTime = ref(1800); // 30分
+const remainingTime = ref(meta.limitTime); // 30分
 const userAnswers = ref<UserAnswers>({
   single: '',
   multiple: {},
@@ -294,9 +298,52 @@ function resetUserAnswer() {
 //     .map(([option, _]) => option);
 // }
 
+function calculateScore(): number {
+  let totalScore = 0;
+  questions.forEach((question, index) => {
+    const userAnswer = userAnswers.value[question.type];
+    switch (question.type) {
+      case 'single':
+        if (userAnswer === question.correctAnswer) totalScore++;
+        break;
+      case 'multiple':
+        const selectedOptions = Object.entries(userAnswer)
+          .filter(([_, isChecked]) => isChecked)
+          .map(([option, _]) => option);
+        if (JSON.stringify(selectedOptions.sort()) === JSON.stringify(question.correctAnswer.sort())) totalScore++;
+        break;
+      case 'code':
+        // 簡単な比較。実際には、より高度なコード評価が必要かもしれません。
+        if (userAnswer.trim() === question.correctAnswer.trim()) totalScore++;
+        break;
+      case 'sort':
+        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        break;
+      case 'free_text':
+        // 自由記述の採点は難しいので、ここでは単純に文字列の一致を確認します。
+        // 実際のアプリケーションでは、より高度な採点ロジックが必要かもしれません。
+        if (userAnswer.includes(question.correctAnswer)) totalScore++;
+        break;
+      case 'fill_in_blank':
+        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        break;
+      case 'matching':
+        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        break;
+    }
+  });
+  return totalScore;
+}
+
 function submitTest() {
-  // Here you would implement the logic to calculate the final score
-  alert(`テストが終了しました。最終スコア: ${score.value}点`);
+  const finalScore = calculateScore();
+  score.value = finalScore;
+  const maxScore = questions.length;
+  alert(`テストが終了しました。\n最終スコア: ${finalScore}/${maxScore} 点`);
+  
+  // ここで結果の詳細を表示したり、サーバーに送信したりすることができます。
+  console.log('ユーザーの回答:', userAnswers.value);
+  console.log('正解:', questions.map(q => q.correctAnswer));
 }
 
 // Drag and drop functionality for sort questions
