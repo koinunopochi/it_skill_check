@@ -1,6 +1,6 @@
 meta:
   title: エンジニアスキルチェックテスト
-  limitTime: 10 # 30 minutes
+  limitTime: 1800 # 30 minutes
 
 questions:
   - id: 1

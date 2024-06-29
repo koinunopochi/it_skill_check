@@ -3,6 +3,7 @@
   <main class="skill-check">
     <h1>{{ meta.title }}</h1>
     <Timer
+      :key="timerKey"
       :duration="meta.limitTime"
       @time-up="submitTest"
       @half-time="handleHalfTime"
@@ -47,20 +48,12 @@
         />
       </div>
 
-      <div v-else-if="currentQuestion.type === 'sort'" class="sort-options">
-        <div
-          v-for="option in currentQuestion.options"
-          :key="option"
-          draggable="true"
-          @dragstart="dragStart"
-          @dragover.prevent
-          @drop="drop"
-          class="sort-item"
-        >
-          {{ option }}
-        </div>
+      <div v-else-if="currentQuestion.type === 'sort'" class="sort-question">
+        <Sort
+          :options="currentQuestion.options"
+          v-model="userAnswers.sort"
+        />
       </div>
-
       <!-- Free text question -->
       <div
         v-else-if="currentQuestion.type === 'free_text'"
@@ -137,94 +130,39 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, reactive, watch } from 'vue';
 import type { Meta, Question, UserAnswers } from './types';
 import Button from '@/stories/Bases/Buttons/Button.vue';
 import RadioButton from '@/stories/Bases/RadioButtons/RadioButton.vue';
 import CheckboxButton from '@/stories/Bases/CheckboxButtons/CheckboxButton.vue';
 import TextInput from '@/stories/Bases/TextInputs/TextInput.vue';
 import Timer from '@/stories/Bases/Timers/Timer.vue';
+import Sort from '@/stories/Bases/Sorts/Sort.vue';
 
-// note: 後々YAMLからインポートする
-const meta: Meta = {
-  title: 'エンジニアスキルチェックテスト',
-  limitTime: 10, // 30 minutes
+const timerKey = ref(0);
+
+const fetchQuestions = async () => {
+  const id = 'sample-question';
+  try {
+    const response = await fetch(
+      `http://localhost:3000/api/exam?filename=${id}`
+    );
+    if (!response.ok) {
+      throw new Error('Network response was not ok');
+    }
+    return await response.json();
+  } catch (error) {
+    console.error('Error fetching questions:', error);
+    return null;
+  }
 };
 
-const questions: Question[] = [
-  {
-    id: 1,
-    type: 'single',
-    question:
-      'JavaScriptにおいて、配列の末尾に要素を追加するメソッドは次のうちどれですか？',
-    options: ['push()', 'append()', 'addToEnd()', 'insert()'],
-    correctAnswer: 'push()',
-  },
-  {
-    id: 2,
-    type: 'multiple',
-    question:
-      'RESTful APIのHTTPメソッドのうち、リソースの作成に使用されるものはどれですか？（複数選択可）',
-    options: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
-    correctAnswer: ['POST', 'PUT'],
-  },
-  {
-    id: 3,
-    type: 'code',
-    question:
-      '次の関数を完成させてください。この関数は与えられた配列の要素をすべて2倍にして返します。',
-    correctAnswer: 'return arr.map(x => x * 2);',
-  },
-  {
-    id: 4,
-    type: 'sort',
-    question:
-      '以下のソフトウェア開発プロセスを正しい順序に並べ替えてください。',
-    options: ['テスト', '設計', '要件定義', '実装', '保守'],
-    correctAnswer: ['要件定義', '設計', '実装', 'テスト', '保守'],
-  },
-  {
-    id: 5,
-    type: 'single',
-    question: 'どのデータ構造がLIFO（Last In First Out）の原則に従いますか？',
-    options: ['キュー', 'スタック', '連結リスト', '二分木'],
-    correctAnswer: 'スタック',
-  },
-  {
-    id: 6,
-    type: 'free_text',
-    question:
-      'オブジェクト指向プログラミングの主要な特徴を3つ挙げ、簡単に説明してください。',
-    correctAnswer: '模範解答: カプセル化、継承、ポリモーフィズム', // 採点基準として使用
-  },
-  {
-    id: 7,
-    type: 'fill_in_blank',
-    question:
-      'HTMLにおいて、ハイパーリンクを作成するタグは <_____> です。このタグの主要な属性は _____ で、リンク先のURLを指定します。',
-    blanks: ['a', 'href'],
-    correctAnswer: ['a', 'href'],
-  },
-  {
-    id: 8,
-    type: 'matching',
-    question:
-      '以下のプログラミング言語と、その主な用途をマッチングしてください。',
-    matchingPairs: [
-      { left: 'Python', right: 'データ分析' },
-      { left: 'JavaScript', right: 'Webフロントエンド' },
-      { left: 'SQL', right: 'データベース操作' },
-      { left: 'C++', right: 'システムプログラミング' },
-    ],
-    correctAnswer: {
-      Python: 'データ分析',
-      JavaScript: 'Webフロントエンド',
-      SQL: 'データベース操作',
-      'C++': 'システムプログラミング',
-    },
-  },
-];
+const meta = reactive<Meta>({
+  title: '読み込み中です...',
+  limitTime: 24 * 60 * 60,
+});
 
+const questions = ref<Question[]>([]);
 const currentQuestionIndex = ref(0);
 const score = ref(0);
 
@@ -238,7 +176,9 @@ const userAnswers = ref<UserAnswers>({
   matching: {},
 });
 
-const currentQuestion = computed(() => questions[currentQuestionIndex.value]);
+const currentQuestion = computed(
+  () => questions.value[currentQuestionIndex.value]
+);
 
 const shuffledRightOptions = computed(() => {
   if (
@@ -268,14 +208,16 @@ function prevQuestion() {
 }
 
 function nextQuestion() {
-  if (currentQuestionIndex.value < questions.length - 1) {
+  if (currentQuestionIndex.value < questions.value.length - 1) {
     currentQuestionIndex.value++;
     resetUserAnswer();
   }
 }
 
 function resetUserAnswer() {
-  const currentQuestion = questions[currentQuestionIndex.value];
+  const currentQuestion = questions.value[currentQuestionIndex.value];
+  if (!currentQuestion) return;
+
   const questionType = currentQuestion.type;
 
   switch (questionType) {
@@ -304,7 +246,7 @@ function resetUserAnswer() {
 
 function calculateScore(): number {
   let totalScore = 0;
-  questions.forEach((question, index) => {
+  questions.value.forEach((question) => {
     const userAnswer = userAnswers.value[question.type];
     switch (question.type) {
       case 'single':
@@ -321,7 +263,6 @@ function calculateScore(): number {
           totalScore++;
         break;
       case 'code':
-        // 簡単な比較。実際には、より高度なコード評価が必要かもしれません。
         if (userAnswer.trim() === question.correctAnswer.trim()) totalScore++;
         break;
       case 'sort':
@@ -331,8 +272,6 @@ function calculateScore(): number {
           totalScore++;
         break;
       case 'free_text':
-        // 自由記述の採点は難しいので、ここでは単純に文字列の一致を確認します。
-        // 実際のアプリケーションでは、より高度な採点ロジックが必要かもしれません。
         if (userAnswer.includes(question.correctAnswer)) totalScore++;
         break;
       case 'fill_in_blank':
@@ -355,18 +294,16 @@ function calculateScore(): number {
 function submitTest() {
   const finalScore = calculateScore();
   score.value = finalScore;
-  const maxScore = questions.length;
+  const maxScore = questions.value.length;
   alert(`テストが終了しました。\n最終スコア: ${finalScore}/${maxScore} 点`);
 
-  // ここで結果の詳細を表示したり、サーバーに送信したりすることができます。
   console.log('ユーザーの回答:', userAnswers.value);
   console.log(
     '正解:',
-    questions.map((q) => q.correctAnswer)
+    questions.value.map((q) => q.correctAnswer)
   );
 }
 
-// Drag and drop functionality for sort questions
 function dragStart(e: DragEvent) {
   if (e.dataTransfer) {
     e.dataTransfer.setData('text/plain', (e.target as HTMLElement).innerHTML);
@@ -380,8 +317,28 @@ function drop(e: DragEvent) {
     e.target.innerHTML = data;
   }
 }
-</script>
 
+watch(
+  () => meta.limitTime,
+  (newLimitTime) => {
+    // meta.limitTimeが変更されたらtimerKeyを更新
+    timerKey.value++;
+  },
+  { immediate: true }
+);
+
+onMounted(async () => {
+  const data = await fetchQuestions();
+  if (data) {
+    meta.title = data.meta.title;
+    meta.limitTime = data.meta.limitTime;
+    questions.value = data.questions;
+    resetUserAnswer();
+  } else {
+    meta.title = 'エラーが発生しました';
+  }
+});
+</script>
 <style lang="scss" scoped>
 .skill-check {
   max-width: 800px;
@@ -394,7 +351,7 @@ function drop(e: DragEvent) {
     color: #333;
   }
 
-  .timer{
+  .timer {
     text-align: right;
     margin-bottom: 10px;
     font-weight: bold;
