@@ -1,0 +1,17 @@
+.timer {
+  font-size: 1.5rem;
+  font-weight: bold;
+  padding: 10px;
+  border-radius: 5px;
+  background-color: #f0f0f0;
+  
+  &--warning {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  
+  &--danger {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+}

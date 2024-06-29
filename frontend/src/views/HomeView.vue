@@ -1,7 +1,13 @@
+<!-- HomeView.vue -->
 <template>
   <main class="skill-check">
     <h1>{{ meta.title }}</h1>
-    <div class="timer">残り時間: {{ formatTime(remainingTime) }}</div>
+    <Timer
+      :duration="meta.limitTime"
+      @time-up="submitTest"
+      @half-time="handleHalfTime"
+      @one-minute-left="handleOneMinuteLeft"
+    />
 
     <div v-if="currentQuestion" class="question">
       <h2>問題 {{ currentQuestionIndex + 1 }}:</h2>
@@ -133,14 +139,16 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import type { Meta, Question, UserAnswers } from './types';
-import Button from '@/stories/Buttons/Button.vue';
-import RadioButton from '@/stories/RadioButtons/RadioButton.vue';
-import CheckboxButton from '@/stories/CheckboxButtons/CheckboxButton.vue';
-import TextInput from '@/stories/TextInputs/TextInput.vue';
+import Button from '@/stories/Bases/Buttons/Button.vue';
+import RadioButton from '@/stories/Bases/RadioButtons/RadioButton.vue';
+import CheckboxButton from '@/stories/Bases/CheckboxButtons/CheckboxButton.vue';
+import TextInput from '@/stories/Bases/TextInputs/TextInput.vue';
+import Timer from '@/stories/Bases/Timers/Timer.vue';
 
+// note: 後々YAMLからインポートする
 const meta: Meta = {
   title: 'エンジニアスキルチェックテスト',
-  limitTime: 1800, // 30 minutes
+  limitTime: 10, // 30 minutes
 };
 
 const questions: Question[] = [
@@ -219,7 +227,7 @@ const questions: Question[] = [
 
 const currentQuestionIndex = ref(0);
 const score = ref(0);
-const remainingTime = ref(meta.limitTime); // 30分
+
 const userAnswers = ref<UserAnswers>({
   single: '',
   multiple: {},
@@ -244,11 +252,13 @@ const shuffledRightOptions = computed(() => {
   return [];
 });
 
-function formatTime(seconds: number): string {
-  const minutes = Math.floor(seconds / 60);
-  const remainingSeconds = seconds % 60;
-  return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
-}
+const handleHalfTime = () => {
+  alert('残り時間が半分になりました。');
+};
+
+const handleOneMinuteLeft = () => {
+  alert('残り時間が1分を切りました。');
+};
 
 function prevQuestion() {
   if (currentQuestionIndex.value > 0) {
@@ -292,12 +302,6 @@ function resetUserAnswer() {
   }
 }
 
-// function getSelectedOptions() {
-//   return Object.entries(userAnswers.value.multiple)
-//     .filter(([_, isChecked]) => isChecked)
-//     .map(([option, _]) => option);
-// }
-
 function calculateScore(): number {
   let totalScore = 0;
   questions.forEach((question, index) => {
@@ -310,14 +314,21 @@ function calculateScore(): number {
         const selectedOptions = Object.entries(userAnswer)
           .filter(([_, isChecked]) => isChecked)
           .map(([option, _]) => option);
-        if (JSON.stringify(selectedOptions.sort()) === JSON.stringify(question.correctAnswer.sort())) totalScore++;
+        if (
+          JSON.stringify(selectedOptions.sort()) ===
+          JSON.stringify(question.correctAnswer.sort())
+        )
+          totalScore++;
         break;
       case 'code':
         // 簡単な比較。実際には、より高度なコード評価が必要かもしれません。
         if (userAnswer.trim() === question.correctAnswer.trim()) totalScore++;
         break;
       case 'sort':
-        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        if (
+          JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)
+        )
+          totalScore++;
         break;
       case 'free_text':
         // 自由記述の採点は難しいので、ここでは単純に文字列の一致を確認します。
@@ -325,10 +336,16 @@ function calculateScore(): number {
         if (userAnswer.includes(question.correctAnswer)) totalScore++;
         break;
       case 'fill_in_blank':
-        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        if (
+          JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)
+        )
+          totalScore++;
         break;
       case 'matching':
-        if (JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)) totalScore++;
+        if (
+          JSON.stringify(userAnswer) === JSON.stringify(question.correctAnswer)
+        )
+          totalScore++;
         break;
     }
   });
@@ -340,10 +357,13 @@ function submitTest() {
   score.value = finalScore;
   const maxScore = questions.length;
   alert(`テストが終了しました。\n最終スコア: ${finalScore}/${maxScore} 点`);
-  
+
   // ここで結果の詳細を表示したり、サーバーに送信したりすることができます。
   console.log('ユーザーの回答:', userAnswers.value);
-  console.log('正解:', questions.map(q => q.correctAnswer));
+  console.log(
+    '正解:',
+    questions.map((q) => q.correctAnswer)
+  );
 }
 
 // Drag and drop functionality for sort questions
@@ -374,8 +394,7 @@ function drop(e: DragEvent) {
     color: #333;
   }
 
-  .timer,
-  .score {
+  .timer{
     text-align: right;
     margin-bottom: 10px;
     font-weight: bold;
