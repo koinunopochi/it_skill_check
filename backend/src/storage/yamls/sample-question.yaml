@@ -1,0 +1,94 @@
+meta:
+  title: エンジニアスキルチェックテスト
+  limitTime: 10 # 30 minutes
+
+questions:
+  - id: 1
+    type: single
+    question: JavaScriptにおいて、配列の末尾に要素を追加するメソッドは次のうちどれですか？
+    options:
+      - push()
+      - append()
+      - addToEnd()
+      - insert()
+    correctAnswer: push()
+
+  - id: 2
+    type: multiple
+    question: RESTful APIのHTTPメソッドのうち、リソースの作成に使用されるものはどれですか？（複数選択可）
+    options:
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+    correctAnswer:
+      - POST
+      - PUT
+
+  - id: 3
+    type: code
+    question: 次の関数を完成させてください。この関数は与えられた配列の要素をすべて2倍にして返します。
+    correctAnswer: return arr.map(x => x * 2);
+
+  - id: 4
+    type: sort
+    question: 以下のソフトウェア開発プロセスを正しい順序に並べ替えてください。
+    options:
+      - テスト
+      - 設計
+      - 要件定義
+      - 実装
+      - 保守
+    correctAnswer:
+      - 要件定義
+      - 設計
+      - 実装
+      - テスト
+      - 保守
+
+  - id: 5
+    type: single
+    question: どのデータ構造がLIFO（Last In First Out）の原則に従いますか？
+    options:
+      - キュー
+      - スタック
+      - 連結リスト
+      - 二分木
+    correctAnswer: スタック
+
+  - id: 6
+    type: free_text
+    question: オブジェクト指向プログラミングの主要な特徴を3つ挙げ、簡単に説明してください。
+    correctAnswer: >
+      模範解答: カプセル化、継承、ポリモーフィズム
+
+  - id: 7
+    type: fill_in_blank
+    question: >
+      HTMLにおいて、ハイパーリンクを作成するタグは <_____> です。
+      このタグの主要な属性は _____ で、リンク先のURLを指定します。
+    blanks:
+      - a
+      - href
+    correctAnswer:
+      - a
+      - href
+
+  - id: 8
+    type: matching
+    question: 以下のプログラミング言語と、その主な用途をマッチングしてください。
+    matchingPairs:
+      - left: Python
+        right: データ分析
+      - left: JavaScript
+        right: Webフロントエンド
+      - left: SQL
+        right: データベース操作
+      - left: C++
+        right: システムプログラミング
+    correctAnswer:
+      Python: データ分析
+      JavaScript: Webフロントエンド
+      SQL: データベース操作
+      C++: システムプログラミング
