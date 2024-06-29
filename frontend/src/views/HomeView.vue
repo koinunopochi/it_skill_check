@@ -49,10 +49,7 @@
       </div>
 
       <div v-else-if="currentQuestion.type === 'sort'" class="sort-question">
-        <Sort
-          :options="currentQuestion.options"
-          v-model="userAnswers.sort"
-        />
+        <Sort :options="currentQuestion.options" v-model="userAnswers.sort" />
       </div>
       <!-- Free text question -->
       <div
@@ -142,11 +139,9 @@ import Sort from '@/stories/Bases/Sorts/Sort.vue';
 const timerKey = ref(0);
 
 const fetchQuestions = async () => {
-  const id = 'sample-question';
+  const id = '20c674a8-5494-4513-95e9-ca07f31fe220';
   try {
-    const response = await fetch(
-      `http://localhost:3000/api/exam?filename=${id}`
-    );
+    const response = await fetch(`http://localhost:3000/api/exam?id=${id}`);
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
@@ -203,46 +198,15 @@ const handleOneMinuteLeft = () => {
 function prevQuestion() {
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value--;
-    resetUserAnswer();
   }
 }
 
 function nextQuestion() {
   if (currentQuestionIndex.value < questions.value.length - 1) {
     currentQuestionIndex.value++;
-    resetUserAnswer();
   }
 }
 
-function resetUserAnswer() {
-  const currentQuestion = questions.value[currentQuestionIndex.value];
-  if (!currentQuestion) return;
-
-  const questionType = currentQuestion.type;
-
-  switch (questionType) {
-    case 'multiple':
-      userAnswers.value.multiple = Object.fromEntries(
-        (currentQuestion.options ?? []).map((option) => [option, false])
-      );
-      break;
-    case 'fill_in_blank':
-      userAnswers.value.fill_in_blank = new Array(
-        currentQuestion.blanks?.length || 0
-      ).fill('');
-      break;
-    case 'matching':
-      userAnswers.value.matching = Object.fromEntries(
-        (currentQuestion.matchingPairs ?? []).map((pair) => [pair.left, ''])
-      );
-      break;
-    case 'sort':
-      userAnswers.value.sort = [...(currentQuestion.options ?? [])];
-      break;
-    default:
-      userAnswers.value[questionType] = '';
-  }
-}
 
 function calculateScore(): number {
   let totalScore = 0;
@@ -319,7 +283,6 @@ onMounted(async () => {
     meta.title = data.meta.title;
     meta.limitTime = data.meta.limitTime;
     questions.value = data.questions;
-    resetUserAnswer();
   } else {
     meta.title = 'エラーが発生しました';
   }
