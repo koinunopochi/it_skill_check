@@ -8,26 +8,38 @@
       <h2>問題 {{ currentQuestionIndex + 1 }}:</h2>
       <p>{{ currentQuestion.question }}</p>
 
+      <!-- Single choice question -->
       <div v-if="currentQuestion.type === 'single'" class="options">
-        <label v-for="option in currentQuestion.options" :key="option">
-          <input type="radio" :value="option" v-model="userAnswer" />
-          {{ option }}
-        </label>
+        <RadioButton
+          v-for="option in currentQuestion.options"
+          :key="option"
+          :label="option"
+          :value="option"
+          :name="'question-' + currentQuestion.id"
+          v-model="userAnswers.single"
+        />
       </div>
 
+      <!-- Multiple choice question -->
       <div v-else-if="currentQuestion.type === 'multiple'" class="options">
-        <label v-for="option in currentQuestion.options" :key="option">
-          <input type="checkbox" :value="option" v-model="userAnswer" />
-          {{ option }}
-        </label>
+        <CheckboxButton
+          v-for="option in currentQuestion.options"
+          :key="option"
+          :label="option"
+          :value="option"
+          v-model="userAnswers.multiple[option]"
+        />
       </div>
 
+      <!-- Code question -->
       <div v-else-if="currentQuestion.type === 'code'" class="code-input">
-        <textarea
-          v-model="userAnswer"
+        <TextInput
+          :id="'code-input-' + currentQuestion.id"
+          v-model="userAnswers.code"
+          type="textarea"
           rows="5"
           placeholder="コードを入力してください"
-        ></textarea>
+        />
       </div>
 
       <div v-else-if="currentQuestion.type === 'sort'" class="sort-options">
@@ -44,30 +56,35 @@
         </div>
       </div>
 
+      <!-- Free text question -->
       <div
         v-else-if="currentQuestion.type === 'free_text'"
         class="free-text-input"
       >
-        <textarea
-          v-model="userAnswer"
+        <TextInput
+          :id="'free-text-' + currentQuestion.id"
+          v-model="userAnswers.free_text"
+          type="textarea"
           rows="5"
           placeholder="自由に回答を記述してください"
-        ></textarea>
+        />
       </div>
 
+      <!-- Fill in the blank question -->
       <div
         v-else-if="currentQuestion.type === 'fill_in_blank'"
         class="fill-in-blank"
       >
-        <p v-for="(blank, index) in currentQuestion.blanks" :key="index">
-          <input
-            type="text"
-            v-model="userAnswer[index]"
-            :placeholder="`空欄${index + 1}`"
-          />
-        </p>
+        <TextInput
+          v-for="(blank, index) in currentQuestion.blanks"
+          :key="index"
+          :id="'blank-' + currentQuestion.id + '-' + index"
+          v-model="userAnswers.fill_in_blank[index]"
+          :placeholder="`空欄${index + 1}`"
+        />
       </div>
 
+      <!-- Matching question -->
       <div v-else-if="currentQuestion.type === 'matching'" class="matching">
         <div
           v-for="(pair, index) in currentQuestion.matchingPairs"
@@ -75,7 +92,7 @@
           class="matching-pair"
         >
           <span>{{ pair.left }}</span>
-          <select v-model="userAnswer[pair.left]">
+          <select v-model="userAnswers.matching[pair.left]">
             <option
               v-for="rightOption in shuffledRightOptions"
               :key="rightOption"
@@ -116,8 +133,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import type { Question } from './types';
+import type { Question, UserAnswers } from './types';
 import Button from '@/stories/Buttons/Button.vue';
+import RadioButton from '@/stories/RadioButtons/RadioButton.vue';
+import CheckboxButton from '@/stories/CheckboxButtons/CheckboxButton.vue';
+import TextInput from '@/stories/TextInputs/TextInput.vue';
 
 const questions: Question[] = [
   {
@@ -196,12 +216,23 @@ const questions: Question[] = [
 const currentQuestionIndex = ref(0);
 const score = ref(0);
 const remainingTime = ref(1800); // 30分
-const userAnswer = ref<string | string[] | { [key: string]: string }>('');
+const userAnswers = ref<UserAnswers>({
+  single: '',
+  multiple: {},
+  code: '',
+  sort: [],
+  free_text: '',
+  fill_in_blank: [],
+  matching: {},
+});
 
 const currentQuestion = computed(() => questions[currentQuestionIndex.value]);
 
 const shuffledRightOptions = computed(() => {
-  if (currentQuestion.value?.type === 'matching') {
+  if (
+    currentQuestion.value?.type === 'matching' &&
+    Array.isArray(currentQuestion.value.matchingPairs)
+  ) {
     return currentQuestion.value.matchingPairs
       .map((pair) => pair.right)
       .sort(() => Math.random() - 0.5);
@@ -218,16 +249,50 @@ function formatTime(seconds: number): string {
 function prevQuestion() {
   if (currentQuestionIndex.value > 0) {
     currentQuestionIndex.value--;
-    userAnswer.value = '';
+    resetUserAnswer();
   }
 }
 
 function nextQuestion() {
   if (currentQuestionIndex.value < questions.length - 1) {
     currentQuestionIndex.value++;
-    userAnswer.value = '';
+    resetUserAnswer();
   }
 }
+
+function resetUserAnswer() {
+  const currentQuestion = questions[currentQuestionIndex.value];
+  const questionType = currentQuestion.type;
+
+  switch (questionType) {
+    case 'multiple':
+      userAnswers.value.multiple = Object.fromEntries(
+        (currentQuestion.options ?? []).map((option) => [option, false])
+      );
+      break;
+    case 'fill_in_blank':
+      userAnswers.value.fill_in_blank = new Array(
+        currentQuestion.blanks?.length || 0
+      ).fill('');
+      break;
+    case 'matching':
+      userAnswers.value.matching = Object.fromEntries(
+        (currentQuestion.matchingPairs ?? []).map((pair) => [pair.left, ''])
+      );
+      break;
+    case 'sort':
+      userAnswers.value.sort = [...(currentQuestion.options ?? [])];
+      break;
+    default:
+      userAnswers.value[questionType] = '';
+  }
+}
+
+// function getSelectedOptions() {
+//   return Object.entries(userAnswers.value.multiple)
+//     .filter(([_, isChecked]) => isChecked)
+//     .map(([option, _]) => option);
+// }
 
 function submitTest() {
   // Here you would implement the logic to calculate the final score

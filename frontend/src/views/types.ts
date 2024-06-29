@@ -11,3 +11,13 @@ export interface Question {
   blanks?: string[];
   matchingPairs?: { left: string; right: string }[];
 }
+
+export interface UserAnswers {
+  single: string;
+  multiple: { [key: string]: boolean };
+  code: string;
+  sort: string[];
+  free_text: string;
+  fill_in_blank: string[];
+  matching: { [key: string]: string };
+}
