@@ -2,46 +2,92 @@
   <div class="admin-console">
     <h1>管理コンソール</h1>
 
-    <!-- YAMLファイルリスト -->
-    <div class="file-list">
-      <h2>YAMLファイル一覧</h2>
-      <ul>
-        <li v-for="file in YamlMeta" :key="file.id">
-          <span>{{ file.name }}</span>
-          <button @click="editFile(file.id)">編集</button>
-          <button @click="deleteFile(file.id)">削除</button>
-        </li>
-      </ul>
-    </div>
+    <div class="content">
+      <div class="sidebar">
+        <h2>YAMLファイル一覧</h2>
+        <ul class="file-list">
+          <li
+            v-for="file in YamlMeta"
+            :key="file.id"
+            :class="{ active: editingFile?.id === file.id }"
+          >
+            <span class="file-name">{{ file.name }}</span>
+            <div class="file-actions">
+              <Button
+                :primary="true"
+                @click="editFile(file.id)"
+                label="編"
+                size="small"
+                :square="true"
+              />
+              <Button
+                :primary="true"
+                @click="deleteFile(file.id)"
+                label="削"
+                background-color="#F44336"
+                size="small"
+                :square="true"
+              />
+            </div>
+          </li>
+        </ul>
+      </div>
 
-    <!-- 新規作成フォーム -->
-    <div class="create-form">
-      <h2>新規YAMLファイル作成</h2>
-      <!-- <input v-model="newFileName" placeholder="ファイル名" /> -->
-      <TextInput
-        id="file-name"
-        label="ファイル名"
-        type="text"
-        v-model="newFileName"
-        placeholder="Input file name"
-      />
-      <textarea
-        v-model="newFileContent"
-        placeholder="YAMLコンテンツ"
-      ></textarea>
-      <Button :primary="true" @click="createFile" label="作成" :square="true" />
-    </div>
+      <div class="main-content">
+        <!-- 新規作成フォーム -->
+        <div v-if="!editingFile" class="form-container">
+          <h2>新規YAMLファイル作成</h2>
+          <TextInput
+            id="new-file-name"
+            label="ファイル名"
+            type="text"
+            v-model="newFileName"
+            placeholder="Input file name"
+          />
+          <textarea
+            v-model="newFileContent"
+            placeholder="YAMLコンテンツ"
+          ></textarea>
+          <div class="form-actions">
+            <Button
+              :primary="true"
+              @click="createFile"
+              label="作成"
+              :square="true"
+            />
+          </div>
+        </div>
 
-    <!-- 編集フォーム -->
-    <div v-if="editingFile" class="edit-form">
-      <h2>YAMLファイル編集</h2>
-      <input v-model="editingFile.name" placeholder="ファイル名" />
-      <textarea
-        v-model="editingFile.content"
-        placeholder="YAMLコンテンツ"
-      ></textarea>
-      <Button :primary="true" @click="saveEdit" label="保存" :square="true" />
-      <button @click="cancelEdit">キャンセル</button>
+        <!-- 編集フォーム -->
+        <div v-if="editingFile" class="form-container">
+          <h2>YAMLファイル編集</h2>
+          <TextInput
+            id="edit-file-name"
+            label="ファイル名"
+            type="text"
+            v-model="editingFile.name"
+            placeholder="Input file name"
+          />
+          <textarea
+            v-model="editingFile.content"
+            placeholder="YAMLコンテンツ"
+          ></textarea>
+          <div class="form-actions">
+            <Button
+              :primary="true"
+              @click="saveEdit"
+              label="保存"
+              :square="true"
+            />
+            <Button
+              @click="cancelEdit"
+              label="キャンセル"
+              background-color="#acacac"
+              :square="true"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -100,7 +146,9 @@ const createFile = async () => {
 
 const fetchQuestions = async (id: string) => {
   try {
-    const response = await fetch(`http://localhost:3000/api/exam?id=${id}&format=yaml`);
+    const response = await fetch(
+      `http://localhost:3000/api/exam?id=${id}&format=yaml`
+    );
     if (!response.ok) {
       throw new Error('Network response was not ok');
     }
@@ -112,7 +160,7 @@ const fetchQuestions = async (id: string) => {
 };
 
 // ファイル編集
-const editFile = async(id: string) => {
+const editFile = async (id: string) => {
   const content = await fetchQuestions(id);
   if (!content) return;
   const name = YamlMeta.value.find((file) => file.id === id)?.name || '';
@@ -153,7 +201,9 @@ const cancelEdit = () => {
 const deleteFile = async (id: string) => {
   if (!confirm('本当に削除しますか？')) return;
   try {
-    const response = await fetch(`http://localhost:3000/api/exam?id=${id}`, { method: 'DELETE' });
+    const response = await fetch(`http://localhost:3000/api/exam?id=${id}`, {
+      method: 'DELETE',
+    });
     if (response.ok) {
       await fetchYamlFiles();
     }
@@ -166,30 +216,95 @@ const deleteFile = async (id: string) => {
 onMounted(fetchYamlFiles);
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .admin-console {
-  max-width: 800px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 20px;
-}
+  font-family: Arial, sans-serif;
 
-.file-list,
-.create-form,
-.edit-form {
-  margin-bottom: 30px;
-}
+  h1 {
+    margin-bottom: 20px;
+    color: #333;
+  }
 
-input,
-textarea {
-  width: 100%;
-  margin-bottom: 10px;
-}
+  .content {
+    display: flex;
+    gap: 20px;
+  }
 
-textarea {
-  height: 200px;
-}
+  .sidebar {
+    flex: 0 0 300px;
+    background-color: #f5f5f5;
+    padding: 20px;
+    border-radius: 5px;
 
-button {
-  margin-right: 10px;
+    h2 {
+      margin-bottom: 15px;
+      color: #444;
+    }
+  }
+
+  .file-list {
+    list-style: none;
+    padding: 0;
+    margin-top: 15px;
+
+    li {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px;
+      border-bottom: 1px solid #ddd;
+      transition: background-color 0.3s;
+
+      &:hover,
+      &.active {
+        background-color: #e0e0e0;
+      }
+
+      .file-name {
+        flex-grow: 1;
+        margin-right: 10px;
+      }
+
+      .file-actions {
+        display: flex;
+        gap: 5px;
+      }
+    }
+  }
+
+  .main-content {
+    flex-grow: 1;
+  }
+
+  .form-container {
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+
+    h2 {
+      margin-bottom: 15px;
+      color: #444;
+    }
+
+    textarea {
+      width: 100%;
+      height: 300px;
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+      font-family: monospace;
+      margin-bottom: 15px;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+  }
 }
 </style>
