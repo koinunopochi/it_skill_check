@@ -12,6 +12,9 @@ questions:
       - addToEnd()
       - insert()
     correctAnswer: push()
+    explanation: >
+      JavaScriptの配列において、push()メソッドは配列の末尾に1つ以上の要素を追加するために使用されます。
+      このメソッドは配列の長さを変更し、新しい長さを返します。
 
   - id: 2
     type: multiple
@@ -25,11 +28,18 @@ questions:
     correctAnswer:
       - POST
       - PUT
+    explanation: >
+      RESTful APIにおいて、POSTは新しいリソースを作成するために使用されます。
+      PUTも新しいリソースを作成できますが、主に既存のリソースを更新するために使用されます。
+      POSTは毎回新しいリソースを作成しますが、PUTは同じURLに対して複数回リクエストしても冪等性を保ちます。
 
   - id: 3
     type: code
     question: 次の関数を完成させてください。この関数は与えられた配列の要素をすべて2倍にして返します。
     correctAnswer: return arr.map(x => x * 2);
+    explanation: >
+      この関数はJavaScriptのmap()メソッドを使用しています。map()は配列の各要素に対して
+      与えられた関数を適用し、新しい配列を返します。ここでは、各要素xに対してx * 2を適用しています。
 
   - id: 4
     type: sort
@@ -46,6 +56,9 @@ questions:
       - 実装
       - テスト
       - 保守
+    explanation: >
+      これはウォーターフォールモデルと呼ばれる一般的なソフトウェア開発プロセスの順序です。
+      各段階が順番に進行し、前の段階が完了してから次の段階に移ります。
 
   - id: 5
     type: single
@@ -56,12 +69,20 @@ questions:
       - 連結リスト
       - 二分木
     correctAnswer: スタック
+    explanation: >
+      スタックはLIFO（Last In First Out）の原則に従うデータ構造です。
+      最後に追加された要素が最初に取り出されます。これは、積み重ねた皿を上から1枚ずつ取るのと同じ原理です。
 
   - id: 6
     type: free_text
     question: オブジェクト指向プログラミングの主要な特徴を3つ挙げ、簡単に説明してください。
     correctAnswer: >
-      模範解答: カプセル化、継承、ポリモーフィズム
+      1. カプセル化：データとそのデータを操作するメソッドを1つの単位（オブジェクト）にまとめること。
+      2. 継承：既存のクラスの特性を新しいクラスが引き継ぐこと。
+      3. ポリモーフィズム：同じインターフェースを持つ異なるオブジェクトが、それぞれ異なる方法で動作できること。
+    explanation: >
+      これらの特徴は、オブジェクト指向プログラミングの基本的な概念であり、
+      コードの再利用性、保守性、柔軟性を向上させるのに役立ちます。
 
   - id: 7
     type: fill_in_blank
@@ -74,6 +95,9 @@ questions:
     correctAnswer:
       - a
       - href
+    explanation: >
+      HTMLでは、<a>タグがハイパーリンクを作成するために使用されます。
+      href属性はHypertext REFerenceの略で、リンク先のURLを指定するために使用されます。
 
   - id: 8
     type: matching
@@ -92,3 +116,8 @@ questions:
       JavaScript: Webフロントエンド
       SQL: データベース操作
       C++: システムプログラミング
+    explanation: >
+      各プログラミング言語には得意な分野があります。Pythonはデータ分析や機械学習に広く使用され、
+      JavaScriptはWebブラウザ上で動作するインタラクティブな機能の実装に適しています。
+      SQLはデータベースの操作に特化しており、C++は高速で効率的なシステムレベルのプログラミングに適しています。
+      
