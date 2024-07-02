@@ -44,7 +44,7 @@
 <script setup lang="ts">
 import { defineProps, defineEmits } from 'vue';
 import Button from '@/stories/Bases/Buttons/Button.vue';
-import type { Meta } from './types';
+import type { Meta } from '@/views/types';
 
 defineProps<{
   meta: Meta;
