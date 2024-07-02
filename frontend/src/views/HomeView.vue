@@ -1,7 +1,12 @@
 <!-- HomeView.vue -->
 <template>
   <main class="skill-check">
-    <div v-if="!showResults">
+      <ExplanationPage
+      v-if="!testStarted"
+      :meta="meta"
+      @start-test="startTest"
+    />
+    <div v-if="!showResults && testStarted">
       <h1>{{ meta.title }}</h1>
       <Timer
         :key="timerKey"
@@ -145,8 +150,10 @@ import TextInput from '@/stories/Bases/TextInputs/TextInput.vue';
 import Timer from '@/stories/Bases/Timers/Timer.vue';
 import Sort from '@/stories/Bases/Sorts/Sort.vue';
 import TestResults from '@/stories/pages/TestResults.vue';
+import ExplanationPage from '@/stories/pages/ExplanationPage.vue';
 
 const timerKey = ref(0);
+const testStarted = ref(false);
 
 const fetchQuestions = async () => {
   const id = '20c674a8-5494-4513-95e9-ca07f31fe220';
@@ -281,16 +288,27 @@ watch(
   { immediate: true }
 );
 
+const startTest = () => {
+  testStarted.value = true;
+};
+
 onMounted(async () => {
   const data = await fetchQuestions();
   if (data) {
     meta.title = data.meta.title;
     meta.limitTime = data.meta.limitTime;
+    meta.description = data.meta.description;
+    meta.instructions = data.meta.instructions;
+    meta.rules = data.meta.rules;
+    meta.scoring = data.meta.scoring;
+    meta.requirements = data.meta.requirements;
+    meta.contact = data.meta.contact;
     questions.value = data.questions;
   } else {
     meta.title = 'エラーが発生しました';
   }
 });
+
 </script>
 <style lang="scss" scoped>
 .skill-check {
