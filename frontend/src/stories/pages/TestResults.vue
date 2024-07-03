@@ -1,7 +1,7 @@
 <!-- Pages/TestResults.vue -->
 <template>
   <div class="test-results">
-    <h1>テスト結果</h1>
+    <h1>{{ userAnswers.name }} さんのテスト結果</h1>
     <div class="score-summary">
       <h2>総合スコア: {{ score }} / {{ questions.length }}</h2>
     </div>

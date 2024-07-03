@@ -289,6 +289,13 @@ watch(
 );
 
 const startTest = () => {
+  const name = prompt('お名前を入力してください');
+  if (name) {
+    userAnswers.value.name = name;
+  }else{
+    alert('お名前を入力してください');
+    return;
+  }
   testStarted.value = true;
 };
 
