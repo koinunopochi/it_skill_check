@@ -4,4 +4,5 @@ export interface ExamRepository {
   createExam(filename: string, content: string): Promise<void>;
   updateExam(id: string, filename: string, content: string): Promise<void>;
   deleteExam(id: string): Promise<void>;
+  saveData(id:string,data: any): Promise<void>;
 }

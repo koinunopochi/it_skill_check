@@ -35,4 +35,8 @@ export class ExamService {
   async deleteExam(id: string): Promise<void> {
     return this.examRepository.deleteExam(id);
   }
+
+  async saveData(id: string, data: any): Promise<void> {
+    return this.examRepository.saveData(id, data);
+  }
 }

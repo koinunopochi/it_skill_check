@@ -77,4 +77,14 @@ export class YamlExamRepository implements ExamRepository {
 
     await fs.unlink(this.filePath + filename + '$_id_' + id + '.yaml');
   }
+
+  async saveData(id: string, data: any): Promise<void> {
+    const content = JSON.stringify(data)
+    const name = data['name'];
+    
+    await fs.writeFile(
+      this.filePath + '../results/' + '$_name_' + name + '$_id_' + id + '.json',
+      content
+    );
+  }
 }

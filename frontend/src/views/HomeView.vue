@@ -273,10 +273,33 @@ function calculateScore(): number {
 
 const showResults = ref(false);
 
-function submitTest() {
+const fetchAnswers = async () => {
+  const data = {
+    name: userAnswers.value.name,
+    score: score.value,
+    questions: questions.value,
+    userAnswers: userAnswers.value,
+  };
+  const response = await fetch('http://localhost:3000/api/exam/save-data', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({data}),
+  });
+
+  if (response.ok) {
+    showResults.value = true;
+  } else {
+    alert('エラーが発生しました。管理者にお問い合わせください。');
+  }
+};
+
+async function submitTest() {
   const finalScore = calculateScore();
   score.value = finalScore;
-  showResults.value = true;
+  
+  await fetchAnswers();
 }
 
 watch(

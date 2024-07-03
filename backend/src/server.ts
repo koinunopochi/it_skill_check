@@ -26,6 +26,8 @@ app.post('/api/exam', (req, res) => examController.createExam(req, res));
 app.put('/api/exam', (req, res) => examController.updateExam(req, res));
 app.delete('/api/exam', (req, res) => examController.deleteExam(req, res));
 
+app.post('/api/exam/save-data', (req, res) => examController.saveData(req, res));
+
 app.listen(port, () => {
   console.log(`Server running at http://localhost:${port}`);
 });

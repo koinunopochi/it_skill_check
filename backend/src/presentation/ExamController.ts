@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { ExamService } from '../application/ExamService';
+import { randomUUID } from 'crypto';
 
 export class ExamController {
   constructor(private examService: ExamService) {}
@@ -63,6 +64,20 @@ export class ExamController {
       const id = req.query.id as string;
       await this.examService.deleteExam(id);
       res.json({ message: 'Deleted' });
+    } catch (error: any) {
+      console.error(error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
+  async saveData(req: Request, res: Response): Promise<void> {
+    try {
+      // uuid v4
+      const id = randomUUID();
+      const data = req.body.data as object;
+      console.log(data);
+      await this.examService.saveData(id, data);
+      res.json({ message: 'Saved' });
     } catch (error: any) {
       console.error(error);
       res.status(500).json({ error: 'Internal Server Error' });
